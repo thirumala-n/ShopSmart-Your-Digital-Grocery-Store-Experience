@@ -1,0 +1,46 @@
+const express = require('express');
+const adminController = require('../controllers/adminController');
+const adminCatalogController = require('../controllers/adminCatalogController');
+const validate = require('../middleware/validate');
+const adminCatalogValidators = require('../validators/adminCatalogValidators');
+const adminValidators = require('../validators/adminValidators');
+const { authenticate, authorizeRoles } = require('../middleware/auth');
+const { ROLES } = require('../utils/constants');
+
+const router = express.Router();
+
+router.use(authenticate, authorizeRoles(ROLES.ADMIN));
+router.get('/dashboard/metrics', adminController.dashboardMetrics);
+router.get('/dashboard/analytics', validate(adminValidators.dashboardAnalytics), adminController.dashboardAnalytics);
+router.get('/orders', validate(adminValidators.listOrders), adminController.listOrders);
+router.get('/inventory/low-stock', validate(adminValidators.lowStockAlerts), adminController.lowStockAlerts);
+router.get('/inventory/movements', validate(adminValidators.listStockMovements), adminController.listStockMovements);
+router.get('/users', validate(adminValidators.listUsers), adminController.listUsers);
+router.get('/audit-logs', validate(adminValidators.listAuditLogs), adminController.listAuditLogs);
+router.patch('/users/:id/block', validate(adminValidators.blockUser), adminController.blockUser);
+router.patch('/users/:id/role', validate(adminValidators.updateUserRole), adminController.updateUserRole);
+router.get('/products/csv-template', adminController.productCsvTemplate);
+router.post('/products/bulk-upload', validate(adminValidators.createCsvImportJob), adminController.createProductCsvUploadJob);
+router.get('/products/bulk-upload/:jobId', validate(adminValidators.csvImportJobParam), adminController.getProductCsvUploadJob);
+router.get('/products/bulk-upload/:jobId/failures', validate(adminValidators.csvImportJobParam), adminController.getCsvUploadFailureReport);
+router.get('/inventory/stock-csv-template', adminController.stockCsvTemplate);
+router.post('/inventory/bulk-stock-upload', validate(adminValidators.createCsvImportJob), adminController.createStockCsvUploadJob);
+router.patch('/inventory/threshold', validate(adminValidators.updateThreshold), adminController.updateLowStockThreshold);
+router.get('/products/pending-approval', adminController.listPendingSellerProducts);
+router.patch('/products/:id/review', validate(adminValidators.reviewSellerProduct), adminController.reviewSellerProduct);
+router.post('/products/upsert', validate(adminCatalogValidators.upsertProduct), adminCatalogController.upsertProduct);
+router.delete('/products/:id', validate(adminCatalogValidators.deleteById), adminCatalogController.deleteProduct);
+router.post('/categories/upsert', validate(adminCatalogValidators.upsertCategory), adminCatalogController.upsertCategory);
+router.delete('/categories/:id', validate(adminCatalogValidators.deleteById), adminCatalogController.deleteCategory);
+router.post('/coupons/upsert', validate(adminCatalogValidators.upsertCoupon), adminCatalogController.upsertCoupon);
+router.post('/banners/upsert', validate(adminCatalogValidators.upsertBanner), adminCatalogController.upsertBanner);
+router.get('/banners', adminController.listBanners);
+router.patch('/banners/reorder', validate(adminValidators.reorderBanners), adminController.reorderBanners);
+router.get('/home-featured', adminController.getHomeFeaturedConfig);
+router.post('/home-featured/upsert', validate(adminValidators.upsertHomeFeatured), adminController.upsertHomeFeaturedConfig);
+router.post('/brands/upsert', validate(adminCatalogValidators.upsertBrand), adminCatalogController.upsertBrand);
+router.post('/bundle-offers/upsert', validate(adminCatalogValidators.upsertBundleOffer), adminCatalogController.upsertBundleOffer);
+router.post('/seasonal-sales/upsert', validate(adminCatalogValidators.upsertSeasonalSale), adminCatalogController.upsertSeasonalSale);
+router.post('/policies/upsert', validate(adminCatalogValidators.upsertPolicy), adminCatalogController.upsertPolicyContent);
+
+module.exports = router;
